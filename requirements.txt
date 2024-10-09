@@ -1,0 +1,16 @@
+# data
+numpy
+pandas
+openpyxl
+pyarrow
+
+# ML
+scikit-learn
+dill
+
+# viz
+notebook
+ipywidgets
+matplotlib
+graphviz
+streamlit
