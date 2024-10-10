@@ -13,34 +13,38 @@ from sklearn.tree import export_graphviz
 
 
 def set_plot_sizes(sml, med, big):
-    plt.rc('font', size = sml)          # controls default text sizes
-    plt.rc('axes', titlesize = sml)     # fontsize of the axes title
-    plt.rc('axes', labelsize = med)     # fontsize of the x and y labels
-    plt.rc('xtick', labelsize = sml)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize = sml)    # fontsize of the tick labels
-    plt.rc('legend', fontsize = sml)    # legend fontsize
-    plt.rc('figure', titlesize = big)   # fontsize of the figure title
+    plt.rc("font", size=sml)  # controls default text sizes
+    plt.rc("axes", titlesize=sml)  # fontsize of the axes title
+    plt.rc("axes", labelsize=med)  # fontsize of the x and y labels
+    plt.rc("xtick", labelsize=sml)  # fontsize of the tick labels
+    plt.rc("ytick", labelsize=sml)  # fontsize of the tick labels
+    plt.rc("legend", fontsize=sml)  # legend fontsize
+    plt.rc("figure", titlesize=big)  # fontsize of the figure title
 
-    
-def draw_tree(t, df, size = 10, ratio = 0.6, precision = 0):
-    """ Draws a representation of a random forest in IPython.
+
+def draw_tree(t, df, size=10, ratio=0.6, precision=0):
+    """Draws a representation of a random forest in IPython.
     Parameters:
     -----------
     t: The tree you wish to draw
     df: The data used to train the tree. This is used to get the names of the features.
     """
     s = export_graphviz(
-        t, out_file = None, feature_names = df.columns, 
-        filled = True, special_characters = True, 
-        rotate = True, precision = precision,
+        t,
+        out_file=None,
+        feature_names=df.columns,
+        filled=True,
+        special_characters=True,
+        rotate=True,
+        precision=precision,
     )
-    IPython.display.display(graphviz.Source(re.sub('Tree {',
-       f'Tree {{ size={size}; ratio={ratio}', s)))
-
+    IPython.display.display(
+        graphviz.Source(re.sub("Tree {", f"Tree {{ size={size}; ratio={ratio}", s))
+    )
 
 
 def get_sample(df, n):
-    """ Gets a random sample of n rows from df, without replacement.
+    """Gets a random sample of n rows from df, without replacement.
     Parameters:
     -----------
     df: A pandas data frame, that you wish to sample from.
@@ -64,44 +68,60 @@ def get_sample(df, n):
     idxs = sorted(np.random.permutation(len(df))[:n])
     return df.iloc[idxs].copy()
 
-    
+
 def combine_date(
-    years, 
-    months = 1, 
-    days = 1, 
-    weeks = None, 
-    hours = None, 
-    minutes = None,
-    seconds = None, 
-    milliseconds = None, 
-    microseconds = None, 
-    nanoseconds = None,
-    ):
+    years,
+    months=1,
+    days=1,
+    weeks=None,
+    hours=None,
+    minutes=None,
+    seconds=None,
+    milliseconds=None,
+    microseconds=None,
+    nanoseconds=None,
+):
     years = np.asarray(years) - 1970
     months = np.asarray(months) - 1
     days = np.asarray(days) - 1
-    types = ('<M8[Y]', '<m8[M]', '<m8[D]', '<m8[W]', '<m8[h]',
-             '<m8[m]', '<m8[s]', '<m8[ms]', '<m8[us]', '<m8[ns]')
-    vals = (years, months, days, weeks, hours, minutes, seconds,
-            milliseconds, microseconds, nanoseconds)
-    combined = sum(
-        np.asarray(v, dtype = t) 
-        for t, v in zip(types, vals)
-        if v is not None
+    types = (
+        "<M8[Y]",
+        "<m8[M]",
+        "<m8[D]",
+        "<m8[W]",
+        "<m8[h]",
+        "<m8[m]",
+        "<m8[s]",
+        "<m8[ms]",
+        "<m8[us]",
+        "<m8[ns]",
     )
+    vals = (
+        years,
+        months,
+        days,
+        weeks,
+        hours,
+        minutes,
+        seconds,
+        milliseconds,
+        microseconds,
+        nanoseconds,
+    )
+    combined = sum(np.asarray(v, dtype=t) for t, v in zip(types, vals) if v is not None)
     return combined
 
 
 def add_datepart(
-    df, 
-    fldnames, 
-    drop = True, 
-    time = False, 
-    errors = "raise",
-    ):    
+    df,
+    fldnames,
+    drop=True,
+    time=False,
+    errors="raise",
+):
     """add_datepart converts a column of df from a datetime64 to many columns containing
     the information from the date. This applies changes inplace.
-    
+
     Parameters:
     -----------
     df: A pandas data frame. df gain several new columns.
@@ -126,7 +146,7 @@ def add_datepart(
     >>> df2 = pd.DataFrame({'start_date' : pd.to_datetime(['3/11/2000','3/13/2000','3/15/2000']),
                             'end_date':pd.to_datetime(['3/17/2000','3/18/2000','4/1/2000'],infer_datetime_format=True)})
     >>> df2
-        start_date    end_date    
+        start_date    end_date
     0    2000-03-11    2000-03-17
     1    2000-03-13    2000-03-18
     2    2000-03-15    2000-04-01
@@ -137,37 +157,50 @@ def add_datepart(
     1    2000        3            11            13            0                73                False                False                    False                    False                   False               False               952905600         2000           3            11          18      5               78              False                False               False               False                   False              False               953337600
     2    2000        3            11            15            2               75              False               False                   False                   False                   False               False               953078400          2000        4              13          1       5               92              False               True                False               True                    False              False               954547200
     """
-    if isinstance(fldnames, str): 
+    if isinstance(fldnames, str):
         fldnames = [fldnames]
     for fldname in fldnames:
         fld = df[fldname]
         fld_dtype = fld.dtype
-        
+
         if isinstance(fld_dtype, pd.core.dtypes.dtypes.DatetimeTZDtype):
             fld_dtype = np.datetime64
 
         if not np.issubdtype(fld_dtype, np.datetime64):
             df[fldname] = fld = pd.to_datetime(
-                fld, 
-                infer_datetime_format = True, 
-                errors = errors,
+                fld,
+                infer_datetime_format=True,
+                errors=errors,
             )
-        targ_pre = re.sub('[Dd]ate$', '', fldname)
-        attr = ['Year', 'Month', 'Week', 'Day', 'Dayofweek', 'Dayofyear',
-                'Is_month_end', 'Is_month_start', 'Is_quarter_end', 
-                'Is_quarter_start', 'Is_year_end', 'Is_year_start',
-                ]
-        if time: attr = attr + ['Hour', 'Minute', 'Second']
-        for n in attr: 
-            if n == 'Week': 
+        targ_pre = re.sub("[Dd]ate$", "", fldname)
+        attr = [
+            "Year",
+            "Month",
+            "Week",
+            "Day",
+            "Dayofweek",
+            "Dayofyear",
+            "Is_month_end",
+            "Is_month_start",
+            "Is_quarter_end",
+            "Is_quarter_start",
+            "Is_year_end",
+            "Is_year_start",
+        ]
+        if time:
+            attr = attr + ["Hour", "Minute", "Second"]
+        for n in attr:
+            if n == "Week":
                 df[targ_pre + n] = getattr(fld.dt.isocalendar(), n.lower())
                 continue
             df[targ_pre + n] = getattr(fld.dt, n.lower())
-        df[targ_pre + 'Elapsed'] = fld.astype(np.int64) // 10 ** 9
-        if drop: df.drop(fldname, axis = 1, inplace = True)
+        df[targ_pre + "Elapsed"] = fld.astype(np.int64) // 10**9
+        if drop:
+            df.drop(fldname, axis=1, inplace=True)
     return
-    
-def is_date(x): 
+
+
+def is_date(x):
     return np.issubdtype(x.dtype, np.datetime64)
 
 
@@ -195,11 +228,12 @@ def train_cats(df):
     2     3    a
     now the type of col2 is category
     """
-    for n, c in df.items() or c.dtypes==object:
-        if is_string_dtype(c): df[n] = c.astype('category').cat.as_ordered()
+    for n, c in df.items() or c.dtypes == object:
+        if is_string_dtype(c):
+            df[n] = c.astype("category").cat.as_ordered()
     return
 
-    
+
 def apply_cats(df, trn):
     """Changes any columns of strings in df into categorical variables using trn as
     a template for the category codes.
@@ -235,14 +269,14 @@ def apply_cats(df, trn):
     now the type of col is category {a : 1, b : 2}
     """
     for n, c in df.items():
-        if (n in trn.columns) and (trn[n].dtype.name == 'category'):
-            df[n] = c.astype('category').cat.as_ordered()
-            df[n].cat.set_categories(trn[n].cat.categories, ordered = True, inplace = True)
+        if (n in trn.columns) and (trn[n].dtype.name == "category"):
+            df[n] = c.astype("category").cat.as_ordered()
+            df[n].cat.set_categories(trn[n].cat.categories, ordered=True, inplace=True)
     return
 
 
 def fix_missing(df, col, name, na_dict):
-    """ Fill missing data in a column of df with the median, and add a {name}_na column
+    """Fill missing data in a column of df with the median, and add a {name}_na column
     which specifies if the data was missing.
     Parameters:
     -----------
@@ -294,15 +328,15 @@ def fix_missing(df, col, name, na_dict):
     """
     if is_numeric_dtype(col):
         if pd.isnull(col).sum() or (name in na_dict):
-            df[name + '_na'] = pd.isnull(col)
+            df[name + "_na"] = pd.isnull(col)
             filler = na_dict[name] if name in na_dict else col.median()
             df[name] = col.fillna(filler)
             na_dict[name] = filler
     return na_dict
 
-    
+
 def numericalize(df, col, name, max_n_cat):
-    """ Changes the column col from a categorical type to it's integer codes.
+    """Changes the column col from a categorical type to it's integer codes.
     Parameters:
     -----------
     df: A pandas dataframe. df[name] will be filled with the integer codes from
@@ -335,8 +369,9 @@ def numericalize(df, col, name, max_n_cat):
     1     2    b    2
     2     3    a    1
     """
-    if (not is_numeric_dtype(col) 
-        and ( max_n_cat is None or len(col.cat.categories) > max_n_cat)):
+    if not is_numeric_dtype(col) and (
+        max_n_cat is None or len(col.cat.categories) > max_n_cat
+    ):
         df[name] = pd.Categorical(col).codes + 1
 
 
@@ -350,19 +385,19 @@ def scale_vars(df, mapper):
 
 
 def proc_df(
-    df, 
-    y_fld = None, 
-    skip_flds = None, 
-    ignore_flds = None, 
-    do_scale = False, 
-    na_dict = None,
-    preproc_fn = None, 
-    max_n_cat = None, 
-    subset = None, 
-    mapper = None,
-    ):
-    """ proc_df takes a data frame df and splits off the response variable, and
-    changes the df into an entirely numeric dataframe. For each column of df 
+    df,
+    y_fld=None,
+    skip_flds=None,
+    ignore_flds=None,
+    do_scale=False,
+    na_dict=None,
+    preproc_fn=None,
+    max_n_cat=None,
+    subset=None,
+    mapper=None,
+):
+    """proc_df takes a data frame df and splits off the response variable, and
+    changes the df into an entirely numeric dataframe. For each column of df
     which is not in skip_flds nor in ignore_flds, na values are replaced by the
     median value of the column.
     Parameters:
@@ -427,65 +462,90 @@ def proc_df(
     1.0  0.0  0.0   1.04
     0.0  0.0  1.0   0.21
     """
-    if not ignore_flds: ignore_flds = []
-    if not skip_flds: skip_flds = []
-    if subset: df = get_sample(df, subset)
-    else: df = df.copy()
-    ignored_flds = df.loc[:, ignore_flds]
-    df = df.drop(ignore_flds, axis = 1, inplace = False)
-    if preproc_fn: preproc_fn(df)
-    if y_fld is None: y = None
+    if not ignore_flds:
+        ignore_flds = []
+    if not skip_flds:
+        skip_flds = []
+    if subset:
+        df = get_sample(df, subset)
     else:
-        if not is_numeric_dtype(df[y_fld]): df[y_fld] = pd.Categorical(df[y_fld]).codes
+        df = df.copy()
+    ignored_flds = df.loc[:, ignore_flds]
+    df = df.drop(ignore_flds, axis=1, inplace=False)
+    if preproc_fn:
+        preproc_fn(df)
+    if y_fld is None:
+        y = None
+    else:
+        if not is_numeric_dtype(df[y_fld]):
+            df[y_fld] = pd.Categorical(df[y_fld]).codes
         y = df[y_fld].values
         skip_flds += [y_fld]
     df.drop(skip_flds, axis=1, inplace=True)
 
-    if na_dict is None: na_dict = {}
-    else: na_dict = na_dict.copy()
+    if na_dict is None:
+        na_dict = {}
+    else:
+        na_dict = na_dict.copy()
     na_dict_initial = na_dict.copy()
-    for n,c in df.items(): na_dict = fix_missing(df, c, n, na_dict)
+    for n, c in df.items():
+        na_dict = fix_missing(df, c, n, na_dict)
     if len(na_dict_initial.keys()) > 0:
-        df.drop([a + '_na' for a in list(set(na_dict.keys()) - set(na_dict_initial.keys()))], axis=1, inplace=True)
-    if do_scale: mapper = scale_vars(df, mapper)
-    for n,c in df.items(): numericalize(df, c, n, max_n_cat)
+        df.drop(
+            [
+                a + "_na"
+                for a in list(set(na_dict.keys()) - set(na_dict_initial.keys()))
+            ],
+            axis=1,
+            inplace=True,
+        )
+    if do_scale:
+        mapper = scale_vars(df, mapper)
+    for n, c in df.items():
+        numericalize(df, c, n, max_n_cat)
     df = pd.get_dummies(df, dummy_na=True)
     df = pd.concat([ignored_flds, df], axis=1)
     res = [df, y, na_dict]
-    if do_scale: res = res + [mapper]
+    if do_scale:
+        res = res + [mapper]
     return res
 
 
 def rf_feat_importance(m, df):
-    return pd.DataFrame({
-        'cols': df.columns, 
-        'imp': m.feature_importances_,
-    }).sort_values('imp', ascending = False)
+    return pd.DataFrame(
+        {
+            "cols": df.columns,
+            "imp": m.feature_importances_,
+        }
+    ).sort_values("imp", ascending=False)
 
 
 def set_rf_samples(n):
-    """ Changes Scikit learn's random forests to give each tree a random sample of
+    """Changes Scikit learn's random forests to give each tree a random sample of
     n random rows.
     """
-    forest._generate_sample_indices = (
-        lambda rs, n_samples: forest.check_random_state(rs).randint(0, n_samples, n)
-    )
+    forest._generate_sample_indices = lambda rs, n_samples: forest.check_random_state(
+        rs
+    ).randint(0, n_samples, n)
     return
 
 
 def reset_rf_samples():
-    """ Undoes the changes produced by set_rf_samples.
-    """
-    forest._generate_sample_indices = (
-        lambda rs, n_samples: forest.check_random_state(rs).randint(0, n_samples, n_samples)
-    )
+    """Undoes the changes produced by set_rf_samples."""
+    forest._generate_sample_indices = lambda rs, n_samples: forest.check_random_state(
+        rs
+    ).randint(0, n_samples, n_samples)
     return
 
 
 def get_nn_mappers(df, cat_vars, contin_vars):
     # Replace nulls with 0 for continuous, "" for categorical.
-    for v in contin_vars: df[v] = df[v].fillna(df[v].max() + 100,)
-    for v in cat_vars: df[v].fillna('#NA#', inplace = True)
+    for v in contin_vars:
+        df[v] = df[v].fillna(
+            df[v].max() + 100,
+        )
+    for v in cat_vars:
+        df[v].fillna("#NA#", inplace=True)
 
     # list of tuples, containing variable and instance of a transformer for that variable
     # for categoricals, use LabelEncoder to map to integers. For continuous, standardize
